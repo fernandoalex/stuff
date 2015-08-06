@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Simple python to send msg to #generak
 
 import sys
