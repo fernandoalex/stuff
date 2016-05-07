@@ -1,0 +1,19 @@
+#cloud-config
+
+#Create group admin
+groups:
+  - admin
+
+# Create user1 with password user1
+users:
+  - name: user1
+    groups: wheel, admin
+    lock_passwd: false
+    passwd: $1$EUv8aN9e$3r53RQ3yx08kO0/kAKFEF1
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3Nz...
+# Create user2 with password user2
+  - name: user2
+    groups: wheel
+    lock_passwd: false
+    passwd: $1$EUv8aN9e$8fYJVVim6hglVo8cyKnOG1
