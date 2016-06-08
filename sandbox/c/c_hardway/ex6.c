@@ -6,6 +6,7 @@ int main(int argc, char *argv[]){
 	float power = 2.345f;
 	double super_power = 56789.4532;
 	char initial = 'A';
+	//Strings are a array of chars
 	char first_name[] = "Zed";
 	char last_name[] = "Shaw";
 
@@ -19,6 +20,6 @@ int main(int argc, char *argv[]){
 		first_name, initial, last_name);
 
 	return 0;
-	
-	
+
+
 }
