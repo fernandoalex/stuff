@@ -77,6 +77,20 @@ void test_sorting(int *numbers, int count, compare_cb cmp) {
         printf("\n");
 
         free(sorted);
+
+        /*
+        "How to break it" We are testing function pointer, so to demostrated it
+        we are using the pointer to the funcion do get the code from memory
+        */
+        unsigned char *data = (unsigned char *)cmp;
+
+        //Print the code from memory
+        for(i = 0; i < 25; i++) {
+                printf("%02x:", data[i]);
+        }
+
+        printf("\n");
+
 }
 
 int main(int argc, char *argv[]){
