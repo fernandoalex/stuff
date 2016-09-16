@@ -2,7 +2,10 @@
 #
 # Class used to check information based on the tags of the instance
 #
+# Dependecies: pip3 install croniter
+
 import boto3
+import datetime
 
 class tagChecker:
 
@@ -21,8 +24,19 @@ class tagChecker:
         def isTimeBetween(self):
                 ec2instances = tagChecker.ec2.instances.all()
                 for i in ec2instances:
-                        print(i.id, i.tags[0]['Key'], i.tags[0]['Value'])
-
+                        for y in range(len(i.tags)):
+                                if i.tags[y]['Key'] == "start":
+                                        start_time = i.tags[y]['Value']
+                                if i.tags[y]['Key'] == "stop":
+                                        stop_time = i.tags[y]['Value']
+                        timeA = datetime.datetime.strptime(start_time, "%H:%M")
+                        timeB = datetime.datetime.strptime(stop_time, "%H:%M")
+                        now = datetime.datetime.now()
+                        now_time = now.time()
+                        if now_time >= timeA.time() and now_time <= timeB.time():
+                                return True
+                        else:
+                                return False
 if __name__ == '__main__':
         ec2_instance = tagChecker()
         ec2_instance.isTimeBetween()
