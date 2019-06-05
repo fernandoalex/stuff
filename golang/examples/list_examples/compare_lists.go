@@ -14,7 +14,7 @@ import (
 // creating a function that
 // receives: 2 arrays
 // returns: the diff between
-func getDiff(slice1 []string, slice2 [string]) []string {
+func getDiff(slice1 []string, slice2 []string) []string {
 
 	var diff []string
 
@@ -27,6 +27,12 @@ func getDiff(slice1 []string, slice2 [string]) []string {
 					break
 				}
 			}
+			if !found {
+				diff = append(diff, s1)
+			}
+		}
+		if i == 0 {
+			slice1, slice2 = slice2, slice1
 		}
 	}
 
@@ -42,7 +48,6 @@ func main() {
 	list2 := make([]string, 3,3)
 	list2 = []string{"item1", "item2", "item4"}
 
-	fmt.Println(list1)
-	fmt.Println(list2)
+	fmt.Println(getDiff(list1, list2))
 }
 
