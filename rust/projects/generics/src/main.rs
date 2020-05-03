@@ -1,5 +1,10 @@
 // Use GIT to see the history of this file
-fn largest<T>(list: &[T]) -> T {
+
+
+// https://doc.rust-lang.org/stable/book/ch10-02-traits.html
+// fn largest<T: PartialOrd>(list: &[T]) -> T {
+//
+fn largest<T: PartialOrd + Copy>(list: &[T]) -> T {
     let mut largest = list[0];
 
     for &item in list {
