@@ -6,13 +6,14 @@ extern crate serde_derive;
 
 use bytes::Buf as _;
 use hyper::Client;
+use hyper_tls::HttpsConnector;
 
 // A simple type alias so as to DRY.
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let url = "http://jsonplaceholder.typicode.com/users".parse().unwrap();
+    let url = "https://jsonplaceholder.typicode.com/users".parse().unwrap();
     let users = fetch_json(url).await?;
     // print users
     println!("users: {:#?}", users);
@@ -24,7 +25,10 @@ async fn main() -> Result<()> {
 }
 
 async fn fetch_json(url: hyper::Uri) -> Result<Vec<User>> {
-    let client = Client::new();
+    let https = HttpsConnector::new();
+
+    //let client = Client::new();
+    let client = Client::builder().build::<_, hyper::Body>(https);
 
     // Fetch the url...
     let res = client.get(url).await?;
