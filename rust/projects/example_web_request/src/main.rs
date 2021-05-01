@@ -6,6 +6,7 @@ extern crate serde_derive;
 
 use bytes::Buf as _;
 use hyper::Client;
+// if you are using this remember to add the configs in .cargo/config
 use hyper_tls::HttpsConnector;
 
 // A simple type alias so as to DRY.
