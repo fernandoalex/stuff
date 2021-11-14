@@ -1,4 +1,8 @@
-use mongodb::{bson::doc, bson::Document, options::ClientOptions, Client};
+use mongodb::{
+    bson::doc, 
+    bson::Document, 
+    options::ClientOptions, Client
+};
 
 #[tokio::main]
 async fn main() -> mongodb::error::Result<()> {
