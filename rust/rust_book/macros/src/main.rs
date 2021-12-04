@@ -34,5 +34,4 @@ macro_rules! custom_macro {
 fn main() {
     let v: Vec<u32> = custom_macro![1,2,3];
     println!("{}", v[2]);
-
 }
