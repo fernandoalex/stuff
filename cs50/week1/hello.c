@@ -1,10 +1,11 @@
 #include <stdio.h>
 
 int main(void) {
-	int one = 1;
-	int two = 2;
+	int value = 1234;
 
-	printf("%d\n", one);
-	printf("%d\n", two);
-	printf("hello world!\n");
+	while (value > 0) {
+		int digit = value % 10;
+		value /= 10;
+		printf("%d\n", digit);
+	}
 }
