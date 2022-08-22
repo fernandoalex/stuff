@@ -7,12 +7,20 @@ import (
 )
 
 func doSomething(ctx context.Context) {
-	ctx, cancelCtx := context.WithCancel(ctx)
+	deadline := time.Now().Add(1500 * time.Millisecond)
+	ctx, cancelCtx := context.WithDeadline(ctx, deadline)
+	defer cancelCtx()
+
 	printCh := make(chan int)
 
 	go doAnother(ctx, printCh)
 	for num := 1; num <= 3; num++{
-		printCh <- num
+		select {
+			case printCh <- num:
+				time.Sleep(1 * time.Second)
+			case <-ctx.Done():
+				break
+		}
 	}
 
 	cancelCtx()
