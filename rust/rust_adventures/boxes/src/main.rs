@@ -1,5 +1,3 @@
-use std::thread::spawn;
-
 use bevy::prelude::*;
 use itertools::Itertools;
 use rand::prelude::*;
@@ -62,15 +60,39 @@ struct Position {
 #[derive(Default, Component)]
 struct TileText;
 
+#[derive(Resource)]
+struct FontSpec {
+    family: Handle<Font>,
+}
+
+impl FromWorld for FontSpec {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world
+            .get_resource_mut::<AssetServer>()
+            .unwrap();
+
+        return FontSpec {
+            family: asset_server
+                .load("fonts/FiraSans-Bold.ttf"),
+        }
+    }
+
+}
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         // setup here is the `fn setup` reason we pass it this way is because
         // of "extension traits", bevy uses the type signature of the function
         // to "add" some stuff to it
+        .init_resource::<FontSpec>()
         .add_startup_system(setup)
         .add_startup_system(spawn_board)
-        .add_startup_system(spawn_tiles)
+        .add_startup_system_to_stage(
+            StartupStage::PostStartup, 
+            spawn_tiles
+        )
+        .add_system(render_tile_points)
         .run();
 }
 
@@ -126,6 +148,7 @@ fn spawn_board(mut commands: Commands) {
 fn spawn_tiles (
     mut commands: Commands,
     query_board: Query<&Board>,
+    font_spec: Res<FontSpec>,
 ) {
     let board = query_board.single();
 
@@ -160,6 +183,9 @@ fn spawn_tiles (
                     text: Text::from_section(
                         "2", 
                         TextStyle {
+                            font: font_spec
+                                .family
+                                .clone(),
                             font_size: 40.0,
                             color: Color::BLACK,
                             ..Default::default()
@@ -175,5 +201,25 @@ fn spawn_tiles (
             })
             .insert(Points { value: 2 })
             .insert(pos);
+    }
+}
+
+fn render_tile_points(
+    mut texts: Query<&mut Text, With<TileText>>,
+    tiles: Query<(&Points, &Children)>,
+) {
+    for (points, children) in tiles.iter() {
+        if let Some(entity) = children.first() {
+           let mut text = texts
+                .get_mut(*entity)
+                .expect("expected Text to exist");
+
+            let mut text_section = text
+                .sections
+                .first_mut()
+                .expect("expect first section to be accessible as mutable");
+
+            return text_section.value = points.value.to_string();
+        }
     }
 }
