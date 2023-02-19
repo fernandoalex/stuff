@@ -1,6 +1,9 @@
+// Where I stopped?
+// Sorting tiles using ordering
 use bevy::prelude::*;
 use itertools::Itertools;
 use rand::prelude::*;
+use std::convert::TryFrom;
 
 const TILE_SIZE: f32 = 40.0;
 const TILE_SPACER: f32 = 10.0;
@@ -16,19 +19,19 @@ impl Board {
         let physical_size = f32::from(size) * TILE_SIZE
             + f32::from(size + 1) * TILE_SPACER;
 
-        return Board {
+        Board {
             size,
             physical_size,
-        };
+        }
     }
 
     fn cell_position_to_physical(&self, pos: u8) -> f32 {
         let offset = 
             -self.physical_size / 2.0 + 0.5 * TILE_SIZE;
 
-        return offset
+        offset
             + f32::from(pos) * TILE_SIZE
-            + f32::from(pos + 1) * TILE_SPACER;
+            + f32::from(pos + 1) * TILE_SPACER
     }
 }
 
@@ -71,12 +74,36 @@ impl FromWorld for FontSpec {
             .get_resource_mut::<AssetServer>()
             .unwrap();
 
-        return FontSpec {
+        FontSpec {
             family: asset_server
                 .load("fonts/FiraSans-Bold.ttf"),
         }
     }
 
+}
+enum BoardShift {
+    Left,
+    Right,
+    Up,
+    Down,
+}
+
+impl TryFrom<&KeyCode> for BoardShift {
+    type Error = &'static str;
+
+    fn try_from(value: &KeyCode) -> Result<Self, Self::Error> {
+        match value {
+            KeyCode::H => Ok(BoardShift::Left),
+            KeyCode::J => Ok(BoardShift::Up),
+            KeyCode::L => Ok(BoardShift::Right),
+            KeyCode::K => Ok(BoardShift::Down),
+            KeyCode::Left => Ok(BoardShift::Left),
+            KeyCode::Up => Ok(BoardShift::Up),
+            KeyCode::Right => Ok(BoardShift::Right),
+            KeyCode::Down => Ok(BoardShift::Down),
+            _ => Err("not a valid board_shift key"),
+        }
+    }
 }
 
 fn main() {
@@ -93,6 +120,7 @@ fn main() {
             spawn_tiles
         )
         .add_system(render_tile_points)
+        .add_system(board_shift)
         .run();
 }
 
@@ -219,7 +247,30 @@ fn render_tile_points(
                 .first_mut()
                 .expect("expect first section to be accessible as mutable");
 
-            return text_section.value = points.value.to_string();
+            text_section.value = points.value.to_string()
         }
+    }
+}
+
+fn board_shift (keyboard_input: Res<Input<KeyCode>>) {
+    let shift_direction = 
+        keyboard_input.get_just_pressed().find_map(
+            |key_code| BoardShift::try_from(key_code).ok(),
+        );
+    
+    match shift_direction {
+        Some(BoardShift::Left) => {
+            dbg!("left");
+        }
+        Some(BoardShift::Right) => {
+            dbg!("right");
+        }
+        Some(BoardShift::Up) => {
+            dbg!("up");
+        }
+        Some(BoardShift::Down) => {
+            dbg!("down");
+        }
+        None => (),
     }
 }
