@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 use itertools::Itertools;
 use rand::prelude::*;
-use std::convert::TryFrom;
+use std::{convert::TryFrom, cmp::Ordering};
 
 const TILE_SIZE: f32 = 40.0;
 const TILE_SPACER: f32 = 10.0;
@@ -88,6 +88,73 @@ enum BoardShift {
     Down,
 }
 
+impl BoardShift {
+    fn sort(&self, a: &Position, b: &Position) -> Ordering {
+
+        match self {
+            BoardShift::Left => {
+                match Ord::cmp (&a.y, &b.y) {
+                    Ordering::Equal => Ord::cmp(&a.x, &b.x),
+                    ordering => ordering,
+                }
+            },
+            BoardShift::Right => {
+                match Ord::cmp (&b.y, &a.y) {
+                    Ordering::Equal => Ord::cmp(&a.x, &b.x),
+                    a => a,
+                }
+            },
+            BoardShift::Up => {
+                match Ord::cmp (&b.x, &a.x) {
+                    Ordering::Equal => Ord::cmp(&b.y, &a.y),
+                    ordering => ordering,
+                }
+            },
+            BoardShift::Down => {
+                match Ord::cmp (&a.x, &b.x) {
+                    Ordering::Equal => Ord::cmp(&a.x, &b.x),
+                    ordering => ordering,
+                }
+            },
+        }
+
+    }
+
+    fn set_column_position (
+        &self,
+        board_size: u8,
+        position: &mut Mut<Position>,
+        index: u8,
+    ) {
+        match self {
+            BoardShift::Left => {
+                position.x = index;
+            },
+            BoardShift::Right => {
+                position.x = board_size - 1 - index;
+            },
+            BoardShift::Up => {
+                position.y = board_size - 1 - index;
+            },
+            BoardShift::Down => {
+                position.y = index;
+            },
+        }
+    }
+
+    fn get_row_position (
+        &self,
+        position: &Position,
+    ) -> u8 {
+        match self {
+            BoardShift::Left => position.y,
+            BoardShift::Right => position.y,
+            BoardShift::Up => position.x,
+            BoardShift::Down => position.x,
+        }
+    }
+}
+
 impl TryFrom<&KeyCode> for BoardShift {
     type Error = &'static str;
 
@@ -121,6 +188,7 @@ fn main() {
         )
         .add_system(render_tile_points)
         .add_system(board_shift)
+        .add_system(render_tiles)
         .run();
 }
 
@@ -252,25 +320,85 @@ fn render_tile_points(
     }
 }
 
-fn board_shift (keyboard_input: Res<Input<KeyCode>>) {
+fn board_shift (
+    mut commands: Commands,
+    keyboard_input: Res<Input<KeyCode>>,
+    mut tiles: Query<(Entity, &mut Position, &mut Points)>,
+    query_board: Query<&Board>,
+) {
+    let board = query_board
+        .single();
+
     let shift_direction = 
-        keyboard_input.get_just_pressed().find_map(
-            |key_code| BoardShift::try_from(key_code).ok(),
-        );
-    
-    match shift_direction {
-        Some(BoardShift::Left) => {
-            dbg!("left");
+    keyboard_input.get_just_pressed().find_map(
+        |key_code| BoardShift::try_from(key_code).ok(),
+    );
+
+    if let Some(board_shift) = shift_direction {
+        let mut it =
+        tiles
+            .iter_mut()
+            .sorted_by(|a, b| { 
+                board_shift.sort(&a.1, &b.1)
+            })
+            // kinda like .next but it does not move the iterator
+            .peekable();
+
+        let mut column: u8 = 0;
+
+        while let Some(mut tile) = it.next() {
+            board_shift
+                .set_column_position(board.size, &mut tile.1, column);
+            if let Some(tile_next) = it.peek() {
+                if board_shift.get_row_position(&tile.1) 
+                    != board_shift.get_row_position(&tile_next.1)
+                {
+                    // different rows, don't merge
+                    column = 0;
+                } else if tile.2.value != tile_next.2.value {
+                    // different values, don't merge
+                    column = column + 1;
+                } else { // merge tiles
+                    let real_next_tile = it.next()
+                        .expect("A peeked tile should always exist when we .next here");
+
+                    tile.2.value = tile.2.value
+                        + real_next_tile.2.value;
+
+                    commands.
+                        entity(real_next_tile.0)
+                        .despawn_recursive();
+
+                    if let Some(future) = it.peek() {
+                        if board_shift.get_row_position(&tile.1) 
+                            != board_shift.get_row_position(&future.1)
+                        {
+                            column = 0;
+                        } else {
+                            column = column + 1;
+                        }
+                    }
+                }
+            }
         }
-        Some(BoardShift::Right) => {
-            dbg!("right");
+    }
+}
+
+fn render_tiles (
+    mut tiles: Query<(
+        &mut Transform,
+        &Position,
+        Changed<Position>,
+    )>,
+    query_board: Query<&Board>,
+){
+    let board = query_board
+        .single();
+
+    for (mut transform, pos, pos_changed) in tiles.iter_mut() {
+        if pos_changed {
+            transform.translation.x = board.cell_position_to_physical(pos.x);
+            transform.translation.y = board.cell_position_to_physical(pos.y);
         }
-        Some(BoardShift::Up) => {
-            dbg!("up");
-        }
-        Some(BoardShift::Down) => {
-            dbg!("down");
-        }
-        None => (),
     }
 }
