@@ -1,8 +1,8 @@
 // Where I stopped?
-// Sorting tiles using ordering
 use bevy::prelude::*;
 use itertools::Itertools;
 use rand::prelude::*;
+
 use std::{convert::TryFrom, cmp::Ordering};
 
 const TILE_SIZE: f32 = 40.0;
@@ -175,19 +175,39 @@ impl TryFrom<&KeyCode> for BoardShift {
 
 struct NewTileEvent;
 
+#[derive(Default, Resource)]
+struct Game {
+    score: u32,
+}
+
+#[derive(
+    Default, 
+    Debug, 
+    Clone, 
+    Eq, 
+    PartialEq, 
+    Hash, 
+    States)
+    ]
+enum RunState {
+    #[default]
+    Playing,
+}
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .init_resource::<Game>()
+        .init_resource::<FontSpec>()
+        .add_event::<NewTileEvent>()
         // setup here is the `fn setup` reason we pass it this way is because
         // of "extension traits", bevy uses the type signature of the function
         // to "add" some stuff to it
-        .init_resource::<FontSpec>()
-        .add_event::<NewTileEvent>()
+        .add_state::<RunState>()
         .add_startup_system(setup)
         .add_startup_system(spawn_board)
-        .add_startup_system_to_stage(
-            StartupStage::PostStartup, 
-            spawn_tiles
+        .add_system(
+            spawn_tiles.in_schedule(OnEnter(RunState::Playing))
         )
         .add_system(render_tile_points)
         .add_system(board_shift)
@@ -296,6 +316,7 @@ fn board_shift (
     mut tiles: Query<(Entity, &mut Position, &mut Points)>,
     query_board: Query<&Board>,
     mut tile_write: EventWriter<NewTileEvent>,
+    mut game: ResMut<Game>,
 ) {
     let board = query_board
         .single();
@@ -335,6 +356,7 @@ fn board_shift (
 
                     tile.2.value = tile.2.value
                         + real_next_tile.2.value;
+                        game.score += tile.2.value;
 
                     commands.
                         entity(real_next_tile.0)
@@ -352,6 +374,7 @@ fn board_shift (
                 }
             }
         }
+        dbg!(game.score);
         tile_write.send(NewTileEvent);
     }
 }
@@ -449,10 +472,13 @@ fn spawn_tile(
                         },
                     )
                     .with_alignment(
-                            TextAlignment { 
-                                vertical: VerticalAlign::Center, 
-                                horizontal: HorizontalAlign::Center 
-                            }),
+                            TextAlignment::Center,
+                        ),
+                    // .with_alignment(
+                    //         TextAlignment { 
+                    //             vertical: VerticalAlign::Center, 
+                    //             horizontal: HorizontalAlign::Center 
+                    //         }),
                     transform: Transform::from_xyz(0.0, 0.0, 1.0),
                     ..Default::default()
                 })
