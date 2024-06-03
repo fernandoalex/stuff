@@ -1,0 +1,8 @@
+apiVersion: monitoring.grafana.com/v1alpha2
+kind: PodLogs  
+metadata:
+  name: podlogs
+  namespace: monitoring
+spec:
+  namespaceSelector: {}
+  selector: {}
