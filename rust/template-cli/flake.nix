@@ -4,14 +4,12 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
-  outputs = { self, nixpkgs, flake-utils, rust-overlay }:
+  outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = import nixpkgs {
         inherit system;
-        overlays = [ rust-overlay.overlay ];
       };
     in
     {
@@ -22,7 +20,7 @@
           pkgs.clippy
           pkgs.rustfmt
           pkgs.openssl
-          pkgs.pkgconfig
+          pkgs.pkg-config
         ];
 
         shellHook = ''
@@ -35,9 +33,9 @@
         pname = "my_cli_app";
         version = "0.1.0";
         src = ./.;
-        cargoSha256 = pkgs.lib.fakeSha256;
+        cargoSha256 = "sha256-wKwi/sdVUfP0Q3wk3nWY7AKu0IC1pzPzyUO1SMThxto=";
         buildInputs = [ pkgs.openssl ];
-        nativeBuildInputs = [ pkgs.pkgconfig ];
+        nativeBuildInputs = [ pkgs.pkg-config ];
       };
     });
 }
