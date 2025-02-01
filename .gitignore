@@ -6,3 +6,5 @@ tags
 .gonvim/
 target/
 result*
+**/.zig-cache/
+**/zig-out/
